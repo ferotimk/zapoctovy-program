@@ -1,31 +1,33 @@
 import cmath as cm
 import math as m
+import random as r
 
 def print_matrix(A):
     #prehlednejsi zbusob pro zobrazeni matic
     if A == False:
-        print(False)
+        print("()")
     else:
-        print("[ ", end = '')
-        print(A[0], ",")
-        for i in A[1:-1]:
-            print(" ",  i, ",")
-        print(" ", A[-1], "]")
+        if type(A) == list:
+            print("[ ", end = '')
+            print(A[0], ",")
+            for i in A[1:-1]:
+                print(" ",  i, ",")
+            print(" ", A[-1], "]")
 
 def matrix_height(A):
     if A == False:
-        return False
+        return 0
     else:
         return len(A)
 
 def matrix_width(A):
     if  A == False:
-        return False
+        return 0
     else:
         return len(A[0])
 
 def create_matrix(m, n):
-    #vytvori matici typu mxn
+    #vytvori ze vstupu matici typu mxn
     A = [[float(input()) for j in range(n)] for i in range(m)]
     return A
 
@@ -86,6 +88,18 @@ def identity(n):
         I[i][i] = 1
     return I
 
+def zero_matrix(m, n):
+    #vrati matici typu mxn se samymi nulami
+    O = [[0 for j in range(n)] for i in range(m)]
+    return O
+
+def random_matrix(m, n):
+    #vrati matici s nahodnymi celymi cisly
+    #matice je typu mxn
+    #hodnoty jsou mezi minus jeden milion a jeden milion
+    R = [[r.randint(-1000000, 1000000) for j in range(n)] for i in range(m)]
+    return R
+
 def transpose(A):
     m = matrix_height(A)
     n = matrix_width(A)
@@ -96,7 +110,14 @@ def is_symetric(A):
     if is_square(A) == False:
         return False
     else:
-        if A == transpose(A):
+        B = matrix_subtraction(A, transpose(A))
+        maximum = abs(B[0][0])
+        n = matrix_height(B)
+        for i in range(n):
+            for j in range(n):
+                if abs(B[i][j]) > maximum:
+                    maximum = abs(B[i][j])
+        if maximum < 0.0000000000000001:
             return True
         else:
             return False
@@ -116,7 +137,7 @@ def is_hermitian(A):
         else:
             return False
 
-def odst_tv(A):
+def row_echelon(A):
     #funkce, ktera ekvivalentnimi upravami prevede matici na odstupnovany tvar
     m = matrix_height(A)
     n = matrix_width(A)
@@ -168,7 +189,7 @@ def odst_tv(A):
 
 
 def rank(A):
-    B = odst_tv(A)
+    B = row_echelon(A)
     m = matrix_height(B)
     n = matrix_width(B)
     rank = m
@@ -246,7 +267,7 @@ def is_regular(A):
     if is_square(A) == False:
         return False
     else:
-        if determinant_2(A) == 0:
+        if abs(determinant_2(A)) < 0.0000000000000001:
             return False
         else:
             return True
@@ -261,7 +282,7 @@ def inverse(A):
         B = [[0 for i in range(n)] for j in range(n)]
         for i in range(n):
             for j in range(n):
-                B[i][j] = determinant_2(submatrix(A, j, i))
+                B[i][j] = ((-1)**(i+j))*determinant_2(submatrix(A, j, i))
         B = matrix_times_number(1/det, B)
         return B
 
@@ -319,32 +340,54 @@ def kvad_rce(a, b, c):
             else:
                 return False
         else:
-            return -c/b
+            #vysledky budeme vracet ve forme listu, aby se nam jednotlive slozky jednoduse zpristupnovaly
+            return [-c/b, -c/b]
     else:
         if b**2-4*a*c == 0:
-            return -b/(2*a)
+            return [-b/(2*a), -b/(2*a)]
         else:
             #abychom meli co nejcistsi vystupy, nebudeme u realnych cisel vypisovat imaginarni cast
             z1, z2 = (-b + cm.sqrt(b**2 - 4*a*c))/(2*a), (-b - cm.sqrt(b**2 - 4*a*c))/(2*a)
             if z1.imag == 0 and z2.imag == 0:
-                return z1.real, z2.real
+                return [z1.real, z2.real]
             elif z1.imag == 0 and z2.imag != 0:
-                return z1.real, z2
+                return [z1.real, z2]
             elif z1.imag != 0 and z2.imag == 0:
-                return z1, z2.real
+                return [z1, z2.real]
             else:
-                return z1, z2
+                return [z1, z2]
 
-def eigenvalues(A):
+#def eigenvalues_2(A):
     #vrati vlastni cisla pro matice typu 2x2
     #ve finalni verzi mozna pribudne i pro matice typu 3x3
-    if matrix_height(A) != 2 or matrix_width(A) != 2:
-        return False
-    else:
-        a1 = 1
-        a2 = -A[0][0] - A[1][1]
-        a3 = A[0][0]*A[1][1] - A[0][1]*A[1][0]
-        return kvad_rce(a1, a2, a3)
+ #
+  #  if matrix_height(A) != 2 or matrix_width(A) != 2:
+   #     return False
+    #else:
+     #   a1 = 1
+      #  a2 = -A[0][0] - A[1][1]
+       # a3 = A[0][0]*A[1][1] - A[0][1]*A[1][0]
+        #return kvad_rce(a1, a2, a3)
+
+#def eigenvectors(A):
+    #vrati vlastni vektory pro matice typu 2x2
+ #   B1 = matrix_subtraction(A, matrix_times_number(eigenvalues_2(A)[0], identity(2)))
+  #  C1 = row_echelon(B1)
+   # if C1[0][0] == 0:
+    #    v1 = [1, 0]
+    #elif C1[0][1] == 0:
+     #   v1 = [0, 1]
+    #else:
+     #   v1 = [(-C1[0][1])/C1[0][0], 1]
+    #B2 = matrix_subtraction(A, matrix_times_number(eigenvalues_2(A)[1], identity(2)))
+    #C2 = row_echelon(B2)
+    #if C2[0][0] == 0:
+    #    v2 = [1, 0]
+    #elif C2[0][1] == 0:
+     #   v2 = [0, 1]
+    #else:
+     #   v2 = [(-C2[0][1]) / C2[0][0], 1]
+    #return [v1, v2]
 
 def is_real(A):
     m = matrix_height(A)
@@ -388,7 +431,8 @@ def cholesky(A):
                         for k in range(j):
                             y += L[i][k]*L[j][k]
                         L[i][j] = round((1/L[j][j])*(A[i][j]-y), 2)
-            return L
+            matice = [L, transpose(L)]
+            return matice
     #komplexni matice
     else:
         if is_pos_semidef(A) == False:
@@ -408,12 +452,8 @@ def cholesky(A):
                         for k in range(j):
                             y += L[i][k] * c_conj(L[j][k])
                         L[i][j] = round((1 / L[j][j]) * (A[i][j] - y), 2)
-            return L
-
-def qr(A):
-    #na vystupu vrati qr rozklad matice A
-    if is_pos_def(A) == False:
-        return False
+            matice = [L, transpose(L)]
+            return matice
 
 
 
